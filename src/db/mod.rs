@@ -14,7 +14,7 @@ impl DB {
 
         Self::init_db(&conn);
 
-        Self { conn: conn }
+        Self { conn }
     }
 
     fn init_db(conn: &Connection) {
@@ -83,7 +83,7 @@ impl DB {
         .unwrap();
     }
 
-    pub fn insert_report(&mut self, report: &report::Feedback, blob: &Vec<u8>) -> Result<()> {
+    pub fn insert_report(&mut self, report: &report::Feedback, blob: &[u8]) -> Result<()> {
         // println!("{:#?}", report);
         self.conn
             .execute(
@@ -144,7 +144,7 @@ impl DB {
                 .auth_results
                 .dkim
                 .clone()
-                .unwrap_or(vec![report::DKIM {
+                .unwrap_or_else(|| vec![report::DKIM {
                     domain: None,
                     result: None,
                     selector: None,

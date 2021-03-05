@@ -1,5 +1,4 @@
 use anyhow::{anyhow, Result};
-use imap;
 use libflate::gzip::Decoder;
 use log::{error, info};
 use mailparse::*;
@@ -21,7 +20,7 @@ struct Attachment {
     name: String,
 }
 
-const USABLE_MIMETYPES: [&'static str; 3] = [
+const USABLE_MIMETYPES: [&str; 3] = [
     "application/zip",
     "application/gzip",
     "application/octet-stream",
@@ -40,7 +39,7 @@ impl ImapExtract {
     pub fn new(config: &Config) -> Self {
         Self {
             server: config.server.clone(),
-            port: config.port.clone(),
+            port: config.port,
             user: config.user.clone(),
             password: config.password.clone(),
             store_folder: config.store_folder.clone(),
@@ -111,13 +110,13 @@ impl ImapExtract {
         let mut decompressed: Vec<u8> = Vec::new();
         // TODO: add function that determines type better, e.g. check file extension if mimetype is
         // octect stream
-        if attachment.mimetype == String::from("application/zip") {
+        if attachment.mimetype == *"application/zip" {
             let mut zip = ZipArchive::new(content).unwrap();
             let mut report = zip.by_index(0)?;
             std::io::copy(&mut report, &mut decompressed)?;
             attachment.name = String::from(report.name());
-        } else if attachment.mimetype == String::from("application/gzip")
-            || attachment.mimetype == String::from("application/octet-stream")
+        } else if attachment.mimetype == *"application/gzip"
+            || attachment.mimetype == *"application/octet-stream"
         {
             let mut report = Decoder::new(content).unwrap();
             std::io::copy(&mut report, &mut decompressed)?;
@@ -138,14 +137,14 @@ impl ImapExtract {
         let mut name = String::new();
 
         if USABLE_MIMETYPES.contains(&content_type.as_str()) {
-            body = mail.get_body_raw().unwrap().clone();
+            body = mail.get_body_raw().unwrap();
             name = mail
                 .get_content_disposition()
                 .params
                 .get("filename")
                 .unwrap()
                 .clone();
-        } else if mail.subparts.len() > 0 {
+        } else if !mail.subparts.is_empty() {
             for subpart in &mail.subparts {
                 content_type = subpart.ctype.mimetype.clone();
                 if USABLE_MIMETYPES.contains(&content_type.as_str()) {
@@ -171,7 +170,7 @@ impl ImapExtract {
         Ok(Attachment {
             content: body,
             decompressed: None,
-            name: name,
+            name,
             mimetype: content_type,
         })
     }

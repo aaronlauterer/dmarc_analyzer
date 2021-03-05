@@ -3,7 +3,7 @@ mod db;
 mod imap_extract;
 mod report;
 
-fn main() -> Result<(), Box<dyn std::error::Error + 'static>> {
+fn main() {
     let config = config::Config::new();
     let db = db::DB::new(&config.db_path);
     println!("Before imap extract creation");
@@ -11,6 +11,4 @@ fn main() -> Result<(), Box<dyn std::error::Error + 'static>> {
     println!("after imap extract creation");
 
     imap_extract.fetch_reports(db);
-
-    Ok(())
 }
