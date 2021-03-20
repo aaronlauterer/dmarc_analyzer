@@ -7,16 +7,23 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-structopt = { version = "0.3", default-features = false}
-anyhow = "1.0.38"
+rocket = "0.4.7"
+serde = "1.0"
+serde_derive = "1.0"
+serde_json = "1.0"
 configparser = "2.0.0"
 rusqlite = "0.24.2"
-serde = { version = "1.0", features = ["derive"] }
-serde-xml-rs = "0.4"
-serde_derive = "1"
+structopt = { version = "0.3", default-features = false}
 log = "0.4.14"
-imap = "2.3.0"
-native-tls = "0.2.4"
-mailparse = "0.13.0"
 zip = { version = "0.5", features = ["deflate"] }
 libflate = "1"
+mailparse = "0.13.0"
+native-tls = "0.2.4"
+imap = "2.3.0"
+anyhow = "1.0.38"
+serde-xml-rs = "0.4"
+
+[dependencies.rocket_contrib]
+version = "0.4.7"
+default-features = false
+features = ["serve", "tera_templates"]

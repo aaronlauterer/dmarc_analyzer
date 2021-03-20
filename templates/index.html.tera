@@ -1,0 +1,36 @@
+{% extends "base" %}
+{% import "macros/plot" as plot %}
+
+{% block header %}
+<script src="/js/plotly-latest.min.js"></script>
+{% endblock header %}
+
+{% block content %}
+<section>
+<h2>Reports list</h2>
+<ul>
+{% for domain in  domains %}
+<li><a href="/all_reports/{{ domain | urlencode }}" title="Show all reports for {{ domain }}">{{ domain }}</a></li>
+{% endfor %}
+</ul>
+</section>
+
+<section class="basic_stats_plots">
+<h3>Last 30 days stats</h3>
+<div>
+{% for domain, stats in basic_stats_last_30 %}
+{{ plot::basic_stats(domain=domain, stats=stats, type='30') }}
+{% endfor %}
+</div>
+</section>
+
+<section class="basic_stats_plots">
+<h3>All time stats</h3>
+<div>
+{% for domain, stats in basic_stats %}
+{{ plot::basic_stats(domain=domain, stats=stats) }}
+{% endfor %}
+</div>
+</section>
+
+{% endblock content %}

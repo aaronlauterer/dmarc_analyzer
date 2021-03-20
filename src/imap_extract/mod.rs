@@ -10,6 +10,7 @@ use zip::ZipArchive;
 use crate::config::Config;
 use crate::db;
 use crate::report;
+use crate::report::serde_defs;
 
 extern crate libflate;
 
@@ -46,7 +47,7 @@ impl ImapExtract {
         }
     }
 
-    pub fn fetch_reports(self, mut database: db::DB) {
+    pub fn fetch_reports(self, database: &db::DB) {
         println!("Starting to fetch reports!");
         let tls = TlsConnector::builder().build().unwrap();
         let client = imap::connect(
@@ -86,11 +87,16 @@ impl ImapExtract {
 
                 let attachment = Self::decompress_attachment(attachment).unwrap();
 
-                let report: report::Feedback = from_reader(std::io::Cursor::new(
+                let parsed_report: serde_defs::Feedback = from_reader(std::io::Cursor::new(
                     &attachment.decompressed.clone().unwrap(),
                 ))
                 .unwrap();
-                match database.insert_report(&report, &attachment.decompressed.unwrap()) {
+                let report = report::Report::from_with_blob(
+                    parsed_report,
+                    Some(attachment.decompressed.unwrap()),
+                );
+
+                match database.insert_report(&report) {
                     Ok(_o) => {
                         // TODO move to store_folder
                     }

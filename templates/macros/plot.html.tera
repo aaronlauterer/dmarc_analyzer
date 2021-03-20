@@ -1,0 +1,76 @@
+{% macro basic_stats(domain, stats, type="") %}
+{% set name = domain ~ type | slugify | replace(from="-", to="_") %}
+<div id="basic_stats_{{ name }}"></div>
+<script>
+let {{ name }}_data = [
+{
+  values: [{{ stats.dkim_passed }}, {{ stats.dkim_failed }}],
+  labels: ['DKIM passed', 'DKIM failed'],
+  domain: {column: 0},
+  name: '{{ domain }} DKIM',
+  hoverinfo: 'label+percent+value',
+  hole: .5,
+  type: 'pie',
+  'marker': {
+      'colors': [
+        'rgb(2, 124, 232)',
+        'rgb(232, 166, 2)',
+      ]
+    },
+},{
+  values: [{{ stats.spf_passed }}, {{ stats.spf_failed }}],
+  labels: ['SPF passed', 'SPF failed'],
+  domain: {column: 1},
+  name: '{{ domain }} SPF',
+  hoverinfo: 'label+percent+value',
+  hole: .5,
+  type: 'pie',
+  'marker': {
+      'colors': [
+        'rgb(3, 183, 93)',
+        'rgb(214, 74, 74)',
+      ]
+    },
+  },
+];
+
+let {{ name }}_layout = {
+  title: '{{ domain }}',
+  annotations: [
+    {
+      font: {
+        size: 15
+      },
+      showarrow: false,
+      text: 'DKIM',
+      x: 0.17,
+      y: 0.5
+    },
+    {
+      font: {
+        size: 15
+      },
+      showarrow: false,
+      text: 'SPF',
+      x: 0.82,
+      y: 0.5
+    },
+  ],
+  height: 220,
+  width: 350,
+    margin: {
+    l: 20,
+    r: 20,
+    b: 0,
+    t: 50,
+    pad: 2
+  },
+  showlegend: false,
+  paper_bgcolor: 'rgba(0,0,0,0)',
+  plot_bgcolor: 'rgba(0,0,0,0)',
+  grid: {rows: 1, columns: 2}
+};
+
+Plotly.newPlot('basic_stats_{{ name }}', {{ name }}_data, {{ name }}_layout);
+</script>
+{% endmacro basic_stats %}

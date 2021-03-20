@@ -29,37 +29,39 @@ impl Config {
     }
 
     fn merge_config_options(config_file: &Ini, args: &arguments::Opt) -> Self {
-        let db_path = args.db_path.clone().unwrap_or_else(|| PathBuf::from(
-            config_file
-                .get("global", "db_path")
-                .unwrap_or_else(|| String::from("data.db")),
-        ));
-        let server = args.server.clone().unwrap_or_else(|| 
+        let db_path = args.db_path.clone().unwrap_or_else(|| {
+            PathBuf::from(
+                config_file
+                    .get("global", "db_path")
+                    .unwrap_or_else(|| String::from("data.db")),
+            )
+        });
+        let server = args.server.clone().unwrap_or_else(|| {
             config_file
                 .get("account", "server")
-                .expect("No server specified!"),
-        );
-        let port = args.port.clone().unwrap_or_else(||
+                .expect("No server specified!")
+        });
+        let port = args.port.clone().unwrap_or_else(|| {
             config_file
                 .getuint("account", "port")
                 .unwrap()
-                .unwrap_or(993) as u16,
-        );
-        let user = args.user.clone().unwrap_or_else(||
+                .unwrap_or(993) as u16
+        });
+        let user = args.user.clone().unwrap_or_else(|| {
             config_file
                 .get("account", "user")
-                .expect("No user specified"),
-        );
-        let password = args.password.clone().unwrap_or_else(||
+                .expect("No user specified")
+        });
+        let password = args.password.clone().unwrap_or_else(|| {
             config_file
                 .get("account", "password")
-                .expect("No password specified"),
-        );
-        let store_folder = args.store_folder.clone().unwrap_or_else(||
+                .expect("No password specified")
+        });
+        let store_folder = args.store_folder.clone().unwrap_or_else(|| {
             config_file
                 .get("account", "store_folder")
-                .unwrap_or_else(|| String::from("processed")),
-        );
+                .unwrap_or_else(|| String::from("processed"))
+        });
 
         Self {
             db_path,
@@ -69,6 +71,12 @@ impl Config {
             password,
             store_folder,
         }
+    }
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

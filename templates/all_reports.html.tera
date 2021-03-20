@@ -1,0 +1,61 @@
+{% extends "base" %}
+
+{% block content %}
+<h2>All Reports for {{ domain }}</h2>
+<table>
+    <thead>
+        <tr>
+            <td>Organisation</td>
+            <td>Date (UTC)</td>
+            <td>DKIM result</td>
+            <td>SPF result</td>
+            <td>Count</td>
+            <td>Source IP</td>
+            <td>IP info</td>
+            <td>Details</td>
+            <td>Full report</td>
+        </tr>
+    </thead>
+    <tbody>
+        {% for report in reports -%}
+        <tr class="report">
+           <td rowspan="{{report.records | length }}"> {{ report.org_name }}</td>
+           <td rowspan="{{report.records | length }}"> {{ report.date_begin | date(format="%Y-%m-%d %H:%M") }}</td>
+        {% for record in report.records -%}
+        {% set dkim_pass = "notpassed" -%}
+        {% set spf_pass = "notpassed" -%}
+        {% if record.policy_evaluated_dkim == "pass" -%}
+            {% set dkim_pass = "passed" -%}
+        {% endif -%}
+        {% if record.policy_evaluated_spf == "pass" -%}
+            {% set spf_pass = "passed" -%}
+        {% endif -%}
+        {% if loop.index > 1 -%}
+        <tr>
+        {% endif %}
+            <td class="{{ dkim_pass }}">DKIM: {{ record.policy_evaluated_dkim }}</td>
+            <td class="{{ spf_pass }}">SPF: {{ record.policy_evaluated_spf }}</td>
+            <td>{{ record.count }}</td>
+            <td>{{ record.source_ip }}</td>
+            <td><a href="https://whatismyipaddress.com/ip/{{ record.source_ip }}" target="_blank">IP Info</a></td>
+        {% if loop.index < 2 -%}
+            <td rowspan="{{report.records | length }}"><a href="#">Details</a></td>
+            <td rowspan="{{report.records | length }}"><a href="javascript:show_report({{ report.blob }})">Raw report</a></td>
+        {% endif %}
+        </tr>
+        {% endfor %}
+        {% endfor %}
+    </tbody>
+</table>
+<div id="full_report" style="display: none;">
+    <div id="full_report_inner">
+        <div class="header">
+            <a href="javascript:close_report()">Close</a>
+        </div>
+        <div class="content">
+            <pre id="report_content"><code></code></pre>
+        </div>
+    </div>
+</div>
+<script src="/js/allreports.js"></script>
+{% endblock content %}
