@@ -101,8 +101,7 @@ impl DB {
         conn.execute(
             "INSERT OR IGNORE INTO domains (domain) VALUES (?1)",
             params![report.policy_domain.clone().unwrap()],
-        )
-        .unwrap();
+        )?;
 
         match conn.execute(
             "SELECT report_id FROM report WHERE report_id = '?1'",
@@ -115,7 +114,7 @@ impl DB {
             Err(_r) => {}
         }
 
-        let tx = Transaction::new_unchecked(conn, TransactionBehavior::Deferred).unwrap();
+        let tx = Transaction::new_unchecked(conn, TransactionBehavior::Deferred)?;
         tx.execute(
             "INSERT INTO report (
                 report_id,
@@ -186,7 +185,7 @@ impl DB {
             )?;
         }
 
-        tx.commit().unwrap();
+        tx.commit()?;
 
         Ok(())
     }
