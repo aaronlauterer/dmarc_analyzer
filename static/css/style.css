@@ -23,6 +23,12 @@ a {
 .passed { background-color: #68a55b; }
 .notpassed { background-color: #f9e457; }
 
+.error {
+    background-color: #fc9f9f;
+    padding: 0.3rem;
+    border-radius: 3px;
+}
+
 .basic_stats_plots > div {
     display: flex;
     flex-wrap: wrap;
