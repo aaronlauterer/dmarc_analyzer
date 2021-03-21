@@ -32,7 +32,7 @@ struct TemplateMainContext {
 }
 
 #[derive(Serialize)]
-struct TemplateAllReports {
+struct TemplateAllReportsContext {
     title: String,
     domain: String,
     reports: Vec<report::Report>,
@@ -79,7 +79,7 @@ fn fetch(db_conn: State<DbConn>, config: State<config::Config>) -> Template {
 fn all_reports(domain: String, db_conn: State<DbConn>) -> Template {
     Template::render(
         "all_reports",
-        &TemplateAllReports {
+        &TemplateAllReportsContext {
             title: format!("Report list: {}", domain),
             domain: domain.clone(),
             reports: db::DB::get_all_reports_for_domain(&db_conn, domain),
