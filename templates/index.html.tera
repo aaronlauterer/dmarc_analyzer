@@ -6,6 +6,7 @@
 {% endblock header %}
 
 {% block content %}
+<a href="/fetch">Fetch reports</a>
 <section>
 <h2>Reports list</h2>
 <ul>
