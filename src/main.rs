@@ -19,8 +19,10 @@ mod report;
 type DbConn = db::DB;
 
 #[derive(Serialize)]
-struct TemplateContext {
+struct TemplateFetchContext {
     title: String,
+    log: String,
+    error: String,
 }
 
 #[derive(Serialize)]
@@ -65,12 +67,19 @@ fn index(db_conn: State<DbConn>) -> Template {
 #[get("/fetch")]
 fn fetch(db_conn: State<DbConn>, config: State<config::Config>) -> Template {
     let imap_extract = imap_extract::ImapExtract::new(&config);
+    let mut error = String::new();
+    let mut logbuf = Vec::new();
 
-    imap_extract.fetch_reports(&db_conn);
+    match imap_extract.fetch_reports(&db_conn, &mut logbuf) {
+        Ok(_o) => {}
+        Err(e) => error = format!("{:#}", e),
+    };
     Template::render(
         "fetched",
-        &TemplateContext {
+        &TemplateFetchContext {
             title: String::from("Fetch"),
+            log: String::from_utf8(logbuf).unwrap(),
+            error,
         },
     )
 }

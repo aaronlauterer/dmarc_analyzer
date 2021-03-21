@@ -1,5 +1,15 @@
 {% extends "base" %}
 
 {% block content %}
+
+
+{% if error %}
+<section class="error">
+Errors:
+<pre>{{ error }}</pre>
+</section>
+{% else %}
 Reports fetched!
+{% endif %}
+<pre>{{ log }}</pre>
 {% endblock content %}

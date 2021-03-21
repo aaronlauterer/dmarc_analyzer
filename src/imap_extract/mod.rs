@@ -1,9 +1,9 @@
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Context, Result};
 use libflate::gzip::Decoder;
-use log::{error, info};
 use mailparse::*;
 use native_tls::TlsConnector;
 use serde_xml_rs::from_reader;
+use std::io::prelude::*;
 use std::path::PathBuf;
 use zip::ZipArchive;
 
@@ -47,45 +47,42 @@ impl ImapExtract {
         }
     }
 
-    pub fn fetch_reports(self, database: &db::DB) {
-        println!("Starting to fetch reports!");
-        let tls = TlsConnector::builder().build().unwrap();
+    pub fn fetch_reports(self, database: &db::DB, logbuf: &mut Vec<u8>) -> Result<()> {
+        writeln!(logbuf, "Starting to fetch reports!")?;
+        let tls = TlsConnector::builder().build()?;
         let client = imap::connect(
             (self.server.clone(), self.port as u16),
             self.server.clone(),
             &tls,
         )
-        .expect("Error connecting to server");
-        let mut imap_session = client
-            .login(self.user, self.password)
-            .expect("Error login to IMAP server");
+        .context("Error connecting to server")?;
+        let mut imap_session = client.login(self.user, self.password).map_err(|e| e.0)?;
 
         let inbox = imap_session
             .select("INBOX")
-            .expect("Failed to select INBOX");
+            .context("Failed to select INBOX")?;
         let message_count = inbox.exists;
-        let messages = imap_session
-            .fetch("1:*", "RFC822")
-            .expect("Selecting messages failed");
+        let messages = imap_session.fetch("1:*", "RFC822")?;
 
         for message in messages.iter() {
-            info!(
+            writeln!(
+                logbuf,
                 "{:.2} % done",
                 100.00 / message_count as f32 * message.message as f32
-            );
+            )?;
             if let Some(body) = message.body() {
-                let mail = parse_mail(body).unwrap();
+                let mail = parse_mail(body)?;
                 let message_id = mail.headers.get_first_value("Message-ID").unwrap();
 
                 let attachment = match Self::get_attachment(&mail) {
                     Ok(attachment) => attachment,
                     Err(e) => {
-                        error!("{} Message: {}", e, message_id);
+                        writeln!(logbuf, "{} Message: {}", e, message_id)?;
                         continue;
                     }
                 };
 
-                let attachment = Self::decompress_attachment(attachment).unwrap();
+                let attachment = Self::decompress_attachment(attachment)?;
 
                 let parsed_report: serde_defs::Feedback = from_reader(std::io::Cursor::new(
                     &attachment.decompressed.clone().unwrap(),
@@ -101,13 +98,15 @@ impl ImapExtract {
                         // TODO move to store_folder
                     }
                     Err(e) => {
-                        eprintln!("{}", e);
+                        writeln!(logbuf, "{}", e)?;
                         continue;
                     }
                 };
             }
         }
-        imap_session.logout().unwrap();
+        imap_session.logout()?;
+
+        Ok(())
     }
 
     fn decompress_attachment(mut attachment: Attachment) -> Result<Attachment> {
