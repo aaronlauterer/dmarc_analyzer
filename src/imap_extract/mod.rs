@@ -103,7 +103,11 @@ impl ImapExtract {
                         // TODO move to store_folder
                     }
                     Err(e) => {
-                        writeln!(logbuf, "{}", e)?;
+                        writeln!(
+                            logbuf,
+                            "{} -- Report: '{}' - Organisation: '{}' ",
+                            e, report.report_id, report.org_name
+                        )?;
                         continue;
                     }
                 };
