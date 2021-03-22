@@ -8,14 +8,13 @@ function show_report(report) {
     report_div.style.display = "flex";
 }
 
-
 function close_report() {
     document.getElementById("full_report").style.display = "none";
 }
 
-
 document.getElementById("full_report").addEventListener("click", function() {close_report()});
 
+document.getElementById("full_report_inner").addEventListener("click", e => e.stopPropagation());
 
 window.addEventListener("keydown", function (event) {
   if (event.defaultPrevented) {
