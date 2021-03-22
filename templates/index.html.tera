@@ -7,6 +7,11 @@
 
 {% block content %}
 <a href="/fetch">Fetch reports</a>
+
+{% if domains | length == 0 %}
+<h2>No reports found</h2>
+<section class="error">There are no reports available yet. Please start a fetch run.</section>
+{% else %}
 <section>
 <h2>Reports list</h2>
 <ul>
@@ -33,5 +38,5 @@
 {% endfor %}
 </div>
 </section>
-
+{% endif %}
 {% endblock content %}
