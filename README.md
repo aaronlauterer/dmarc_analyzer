@@ -23,9 +23,11 @@ Still TODO:
 
 1. Clone this repository
 2. Set it to use rust nightly (needed because of Rocket): `rustup override set nightly`
-3. Adapt the `config.cfg` file to point to you IMAP account that has the DMARC reports.
+3. Adapt the `config.cfg` file to point to your IMAP account that has the DMARC reports.
 4. run `cargo run`
 5. Fetch reports either via the GUI or by running `curl http://localhost:8000/fetch`
+
+To change the listening port or address, change it in the `Rocket.toml` file.
 
 ## Changelog:
 
