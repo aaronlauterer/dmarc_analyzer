@@ -14,6 +14,18 @@ If it fails parsing a report, I would be happy if you could make it available to
 Still TODO:
 - [ ] move mails to other folder once parsed and stored
 
+## Dependencies
+
+- SQLite 3.6.8 or newer
+- OpenSSL
+
+## Installation
+
+1. Clone this repository
+2. Set it to use rust nightly (needed because of Rocket): `rustup override set nightly`
+3. Adapt the `config.cfg` file to point to you IMAP account that has the DMARC reports.
+4. run `cargo run`
+5. Fetch reports either via the GUI or by running `curl http://localhost:8000/fetch`
 
 ## Changelog:
 
