@@ -63,13 +63,18 @@ impl ImapExtract {
             .context("Failed to select INBOX")?;
         let message_count = inbox.exists;
         let messages = imap_session.fetch("1:*", "RFC822")?;
+        let log_each_msg = message_count / 20;
 
+        let mut count = 0;
         for message in messages.iter() {
-            writeln!(
-                logbuf,
-                "{:.2} % done",
-                100.00 / message_count as f32 * message.message as f32
-            )?;
+            count += 1;
+            if count % log_each_msg == 0 {
+                writeln!(
+                    logbuf,
+                    "{:.0} % done",
+                    100.00 / message_count as f32 * message.message as f32
+                )?;
+            }
             if let Some(body) = message.body() {
                 let mail = parse_mail(body)?;
                 let message_id = mail.headers.get_first_value("Message-ID").unwrap();
@@ -104,6 +109,7 @@ impl ImapExtract {
                 };
             }
         }
+        writeln!(logbuf, "100 % done")?;
         imap_session.logout()?;
 
         Ok(())
