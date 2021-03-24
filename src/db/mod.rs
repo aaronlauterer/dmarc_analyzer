@@ -192,7 +192,9 @@ impl DB {
 
     pub fn get_domains(&self) -> Vec<String> {
         let conn = &self.conn.lock().expect("Could not get DB lock");
-        let mut stmt = conn.prepare("SELECT domain FROM domains").unwrap();
+        let mut stmt = conn
+            .prepare("SELECT domain FROM domains ORDER BY domain")
+            .unwrap();
 
         let rows = stmt.query_map(params![], |row| row.get(0)).unwrap();
 
