@@ -7,7 +7,19 @@
     {% block header %}{% endblock header %}
   </head>
   <body>
-      <a href="/"><h1>DMARC Analyzer</h1></a>
+      <header>
+          <nav>
+            <a href="/" title="DMARC Analyzer" id="titlebutton"><h1>DMARC Analyzer</h1></a>
+            <details>
+                <summary>Tasks</summary>
+                <div class="dropdown-wrapper">
+                    <a href="/fetch" title="Fetch reports" id="fetchbutton">Fetch reports</a>
+                </div>
+            </details>
+          </nav>
+      </header>
+      <div>
       {% block content %}{% endblock content %}
+      </div>
   </body>
 </html>

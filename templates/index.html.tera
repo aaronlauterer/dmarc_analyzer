@@ -6,15 +6,13 @@
 {% endblock header %}
 
 {% block content %}
-<a href="/fetch">Fetch reports</a>
-
 {% if domains | length == 0 %}
 <h2>No reports found</h2>
 <section class="error">There are no reports available yet. Please start a fetch run.</section>
 {% else %}
 <section>
 <h2>Reports list</h2>
-<ul>
+<ul class="domain-list">
 {% for domain in  domains %}
 <li><a href="/all_reports/{{ domain | urlencode }}" title="Show all reports for {{ domain }}">{{ domain }}</a></li>
 {% endfor %}
