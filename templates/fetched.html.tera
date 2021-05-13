@@ -9,7 +9,8 @@ Errors:
 <pre>{{ error }}</pre>
 </section>
 {% else %}
-Reports fetched!
+<h2>Reports fetched!</h2>
 {% endif %}
-<pre>{{ log }}</pre>
+<h3>Log</h3>
+<pre class="log">{{ log }}</pre>
 {% endblock content %}

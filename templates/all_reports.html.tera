@@ -33,8 +33,8 @@
         {% if loop.index > 1 -%}
         <tr>
         {% endif %}
-            <td class="{{ dkim_pass }}">DKIM: {{ record.policy_evaluated_dkim }}</td>
-            <td class="{{ spf_pass }}">SPF: {{ record.policy_evaluated_spf }}</td>
+            <td> <span class="result {{ dkim_pass }}">DKIM: {{ record.policy_evaluated_dkim }}</span></td>
+            <td> <span class="result {{ spf_pass }}">SPF: {{ record.policy_evaluated_spf }}</span></td>
             <td>{{ record.count }}</td>
             <td>{{ record.source_ip }}</td>
             <td><a href="https://whatismyipaddress.com/ip/{{ record.source_ip }}" target="_blank">IP Info</a></td>
