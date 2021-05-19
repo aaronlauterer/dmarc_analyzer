@@ -220,9 +220,8 @@ impl DB {
         }
 
         let conn = &self.conn.lock().expect("Could not get DB lock");
-        let mut stmt = conn
-            .prepare(
-                "SELECT
+        let mut stmt = conn.prepare(
+            "SELECT
                 report.policy_domain,
                 sum(record.count)
             FROM report
@@ -232,12 +231,10 @@ impl DB {
             AND date(report.date_begin, 'unixepoch') >= date('now', ?)
             GROUP BY report.policy_domain",
         )?;
-        let rows = stmt
-            .query_map(params![format!("-{} days", last_days)], |row| {
-                Ok(ResRow {
-                    count: row.get(1)?,
-                    domain: row.get(0)?,
-                })
+        let rows = stmt.query_map(params![format!("-{} days", last_days)], |row| {
+            Ok(ResRow {
+                count: row.get(1)?,
+                domain: row.get(0)?,
             })
         })?;
 
@@ -248,9 +245,8 @@ impl DB {
             }
         }
 
-        let mut stmt = conn
-            .prepare(
-                "SELECT
+        let mut stmt = conn.prepare(
+            "SELECT
                 report.policy_domain,
                 sum(record.count)
             FROM report
@@ -260,12 +256,10 @@ impl DB {
             AND date(report.date_begin, 'unixepoch') >= date('now', ?)
             GROUP BY report.policy_domain",
         )?;
-        let rows = stmt
-            .query_map(params![format!("-{} days", last_days)], |row| {
-                Ok(ResRow {
-                    count: row.get(1)?,
-                    domain: row.get(0)?,
-                })
+        let rows = stmt.query_map(params![format!("-{} days", last_days)], |row| {
+            Ok(ResRow {
+                count: row.get(1)?,
+                domain: row.get(0)?,
             })
         })?;
 
@@ -276,9 +270,8 @@ impl DB {
             }
         }
 
-        let mut stmt = conn
-            .prepare(
-                "SELECT
+        let mut stmt = conn.prepare(
+            "SELECT
                 report.policy_domain,
                 sum(record.count)
             FROM report
@@ -288,12 +281,10 @@ impl DB {
             AND date(report.date_begin, 'unixepoch') >= date('now', ?)
             GROUP BY report.policy_domain",
         )?;
-        let rows = stmt
-            .query_map(params![format!("-{} days", last_days)], |row| {
-                Ok(ResRow {
-                    count: row.get(1)?,
-                    domain: row.get(0)?,
-                })
+        let rows = stmt.query_map(params![format!("-{} days", last_days)], |row| {
+            Ok(ResRow {
+                count: row.get(1)?,
+                domain: row.get(0)?,
             })
         })?;
 
@@ -304,9 +295,8 @@ impl DB {
             }
         }
 
-        let mut stmt = conn
-            .prepare(
-                "SELECT
+        let mut stmt = conn.prepare(
+            "SELECT
                 report.policy_domain,
                 sum(record.count)
             FROM report
@@ -316,12 +306,10 @@ impl DB {
             AND date(report.date_begin, 'unixepoch') >= date('now', ?)
             GROUP BY report.policy_domain",
         )?;
-        let rows = stmt
-            .query_map(params![format!("-{} days", last_days)], |row| {
-                Ok(ResRow {
-                    count: row.get(1)?,
-                    domain: row.get(0)?,
-                })
+        let rows = stmt.query_map(params![format!("-{} days", last_days)], |row| {
+            Ok(ResRow {
+                count: row.get(1)?,
+                domain: row.get(0)?,
             })
         })?;
 
@@ -351,9 +339,8 @@ impl DB {
     fn get_report_ids_for_domain(&self, domain: String) -> Result<Vec<String>> {
         let conn = &self.conn.lock().expect("Could not get DB lock");
 
-        let mut stmt = conn
-            .prepare(
-                "SELECT report_id
+        let mut stmt = conn.prepare(
+            "SELECT report_id
                      FROM report
                      WHERE policy_domain = ?
                      ORDER BY date_begin DESC",
@@ -374,9 +361,8 @@ impl DB {
 
         let mut records: Vec<report::Record> = Vec::new();
 
-        let mut stmt = conn
-            .prepare(
-                "SELECT
+        let mut stmt = conn.prepare(
+            "SELECT
             source_ip,
             count,
             policy_ev_disposition,
