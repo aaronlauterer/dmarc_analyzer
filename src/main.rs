@@ -49,9 +49,10 @@ fn not_found(req: &Request) -> Template {
 
 #[get("/")]
 fn index(db_conn: State<DbConn>) -> Template {
-    let domains = db::DB::get_domains(&db_conn);
-    let basic_stats = db::DB::get_basic_stats(&db_conn, 12000);
-    let basic_stats_last_30 = db::DB::get_basic_stats(&db_conn, 30);
+    let domains = db::DB::get_domains(&db_conn).expect("get domains");
+    let basic_stats = db::DB::get_basic_stats(&db_conn, 12000).expect("get basic stats");
+    let basic_stats_last_30 =
+        db::DB::get_basic_stats(&db_conn, 30).expect("get basic last 30 stats");
 
     Template::render(
         "index",
@@ -78,7 +79,7 @@ fn fetch(db_conn: State<DbConn>, config: State<config::Config>) -> Template {
         "fetched",
         &TemplateFetchContext {
             title: String::from("Fetch"),
-            log: String::from_utf8(logbuf).unwrap(),
+            log: String::from_utf8(logbuf).expect("get fetch log"),
             error,
         },
     )
@@ -91,14 +92,15 @@ fn all_reports(domain: String, db_conn: State<DbConn>) -> Template {
         &TemplateAllReportsContext {
             title: format!("Report list: {}", domain),
             domain: domain.clone(),
-            reports: db::DB::get_all_reports_for_domain(&db_conn, domain),
+            reports: db::DB::get_all_reports_for_domain(&db_conn, domain)
+                .expect("get all reports for domain"),
         },
     )
 }
 
 fn rocket() -> rocket::Rocket {
     let config = config::Config::new();
-    let conn = db::DB::new(&config.db_path);
+    let conn = db::DB::new(&config.db_path).expect("get db conn");
     rocket::ignite()
         .mount(
             "/",

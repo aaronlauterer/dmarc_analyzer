@@ -20,17 +20,17 @@ pub struct BasicStats {
 }
 
 impl DB {
-    pub fn new(db_path: &Path) -> Self {
+    pub fn new(db_path: &Path) -> Result<Self> {
         let conn = Connection::open(db_path).expect("Error opening database");
 
-        Self::init_db(&conn);
+        Self::init_db(&conn)?;
 
-        Self {
+        Ok(Self {
             conn: Mutex::new(conn),
-        }
+        })
     }
 
-    fn init_db(conn: &Connection) {
+    fn init_db(conn: &Connection) -> Result<()> {
         conn.execute(
             "CREATE TABLE IF NOT EXISTS report (
                 id                    INTEGER PRIMARY KEY,
@@ -49,15 +49,13 @@ impl DB {
                 policy_pct            INTEGER NOT NULL
                   )",
             params![],
-        )
-        .unwrap();
+        )?;
 
         conn.execute(
             "CREATE UNIQUE INDEX IF NOT EXISTS report_id_index
         on report (report_id)",
             params![],
-        )
-        .unwrap();
+        )?;
 
         conn.execute(
             "CREATE TABLE IF NOT EXISTS record (
@@ -76,8 +74,7 @@ impl DB {
                 auth_spf_result         TEXT
             )",
             params![],
-        )
-        .unwrap();
+        )?;
 
         conn.execute(
             "CREATE TABLE IF NOT EXISTS domains (
@@ -85,22 +82,22 @@ impl DB {
                 domain              TEXT NOT NULL
                 )",
             params![],
-        )
-        .unwrap();
+        )?;
 
         conn.execute(
             "CREATE UNIQUE INDEX IF NOT EXISTS domain_index
         on domains (domain)",
             params![],
-        )
-        .unwrap();
+        )?;
+
+        Ok(())
     }
 
     pub fn insert_report(&self, report: &report::Report) -> Result<()> {
         let conn = &self.conn.lock().expect("Could not get DB lock");
         conn.execute(
             "INSERT OR IGNORE INTO domains (domain) VALUES (?1)",
-            params![report.policy_domain.clone().unwrap()],
+            params![report.policy_domain.clone()],
         )?;
 
         match conn.execute(
@@ -190,23 +187,21 @@ impl DB {
         Ok(())
     }
 
-    pub fn get_domains(&self) -> Vec<String> {
+    pub fn get_domains(&self) -> Result<Vec<String>> {
         let conn = &self.conn.lock().expect("Could not get DB lock");
-        let mut stmt = conn
-            .prepare("SELECT domain FROM domains ORDER BY domain")
-            .unwrap();
+        let mut stmt = conn.prepare("SELECT domain FROM domains ORDER BY domain")?;
 
-        let rows = stmt.query_map(params![], |row| row.get(0)).unwrap();
+        let rows = stmt.query_map(params![], |row| row.get(0))?;
 
         let mut domains = Vec::new();
         for domain_result in rows {
-            domains.push(domain_result.unwrap());
+            domains.push(domain_result?);
         }
-        domains
+        Ok(domains)
     }
 
-    pub fn get_basic_stats(&self, last_days: u16) -> HashMap<String, BasicStats> {
-        let domains = Self::get_domains(&self);
+    pub fn get_basic_stats(&self, last_days: u16) -> Result<HashMap<String, BasicStats>> {
+        let domains = Self::get_domains(&self)?;
 
         #[derive(Debug)]
         struct ResRow {
@@ -236,8 +231,7 @@ impl DB {
             WHERE record.policy_ev_dkim = 'pass'
             AND date(report.date_begin, 'unixepoch') >= date('now', ?)
             GROUP BY report.policy_domain",
-            )
-            .unwrap();
+        )?;
         let rows = stmt
             .query_map(params![format!("-{} days", last_days)], |row| {
                 Ok(ResRow {
@@ -245,12 +239,13 @@ impl DB {
                     domain: row.get(0)?,
                 })
             })
-            .unwrap();
+        })?;
 
         for row in rows {
-            let d = row.unwrap();
-            let cur = stats.get_mut(&d.domain).unwrap();
-            cur.dkim_passed = d.count;
+            let d = row?;
+            if let Some(cur) = stats.get_mut(&d.domain) {
+                cur.dkim_passed = d.count;
+            }
         }
 
         let mut stmt = conn
@@ -264,8 +259,7 @@ impl DB {
             WHERE record.policy_ev_spf = 'pass'
             AND date(report.date_begin, 'unixepoch') >= date('now', ?)
             GROUP BY report.policy_domain",
-            )
-            .unwrap();
+        )?;
         let rows = stmt
             .query_map(params![format!("-{} days", last_days)], |row| {
                 Ok(ResRow {
@@ -273,12 +267,13 @@ impl DB {
                     domain: row.get(0)?,
                 })
             })
-            .unwrap();
+        })?;
 
         for row in rows {
-            let d = row.unwrap();
-            let cur = stats.get_mut(&d.domain).unwrap();
-            cur.spf_passed = d.count;
+            let d = row?;
+            if let Some(cur) = stats.get_mut(&d.domain) {
+                cur.spf_passed = d.count;
+            }
         }
 
         let mut stmt = conn
@@ -292,8 +287,7 @@ impl DB {
             WHERE record.policy_ev_dkim != 'pass'
             AND date(report.date_begin, 'unixepoch') >= date('now', ?)
             GROUP BY report.policy_domain",
-            )
-            .unwrap();
+        )?;
         let rows = stmt
             .query_map(params![format!("-{} days", last_days)], |row| {
                 Ok(ResRow {
@@ -301,12 +295,13 @@ impl DB {
                     domain: row.get(0)?,
                 })
             })
-            .unwrap();
+        })?;
 
         for row in rows {
-            let d = row.unwrap();
-            let cur = stats.get_mut(&d.domain).unwrap();
-            cur.dkim_failed = d.count;
+            let d = row?;
+            if let Some(cur) = stats.get_mut(&d.domain) {
+                cur.dkim_failed = d.count;
+            }
         }
 
         let mut stmt = conn
@@ -320,8 +315,7 @@ impl DB {
             WHERE record.policy_ev_spf != 'pass'
             AND date(report.date_begin, 'unixepoch') >= date('now', ?)
             GROUP BY report.policy_domain",
-            )
-            .unwrap();
+        )?;
         let rows = stmt
             .query_map(params![format!("-{} days", last_days)], |row| {
                 Ok(ResRow {
@@ -329,28 +323,29 @@ impl DB {
                     domain: row.get(0)?,
                 })
             })
-            .unwrap();
+        })?;
 
         for row in rows {
-            let d = row.unwrap();
-            let cur = stats.get_mut(&d.domain).unwrap();
-            cur.spf_failed = d.count;
+            let d = row?;
+            if let Some(cur) = stats.get_mut(&d.domain) {
+                cur.spf_failed = d.count;
+            }
         }
 
-        stats
+        Ok(stats)
     }
 
-    pub fn get_all_reports_for_domain(&self, domain: String) -> Vec<report::Report> {
+    pub fn get_all_reports_for_domain(&self, domain: String) -> Result<Vec<report::Report>> {
         let mut reports: Vec<report::Report> = Vec::new();
 
-        let report_ids = Self::get_report_ids_for_domain(&self, domain).unwrap();
+        let report_ids = Self::get_report_ids_for_domain(&self, domain)?;
 
         for report in report_ids {
             let id = report;
-            reports.push(Self::get_report(&self, id));
+            reports.push(Self::get_report(&self, id)?);
         }
 
-        reports
+        Ok(reports)
     }
 
     fn get_report_ids_for_domain(&self, domain: String) -> Result<Vec<String>> {
@@ -362,22 +357,19 @@ impl DB {
                      FROM report
                      WHERE policy_domain = ?
                      ORDER BY date_begin DESC",
-            )
-            .unwrap();
-        let reports_iter = stmt
-            .query_map(params![domain], |row| Ok(row.get(0)))
-            .unwrap();
+        )?;
+        let reports_iter = stmt.query_map(params![domain], |row| Ok(row.get(0)))?;
 
         let mut report_ids: Vec<String> = Vec::new();
         for report in reports_iter {
-            let id = report.unwrap().unwrap();
+            let id = report??;
             report_ids.push(id);
         }
 
         Ok(report_ids)
     }
 
-    pub fn get_report(&self, report_id: String) -> report::Report {
+    pub fn get_report(&self, report_id: String) -> Result<report::Report> {
         let conn = &self.conn.lock().expect("Could not get DB lock");
 
         let mut records: Vec<report::Record> = Vec::new();
@@ -398,29 +390,26 @@ impl DB {
             auth_spf_result
             FROM record
             WHERE report = ?",
-            )
-            .unwrap();
+        )?;
 
-        let record_iter = stmt
-            .query_map(params![report_id], |row| {
-                Ok(report::Record {
-                    source_ip: row.get(0).unwrap(),
-                    count: row.get(1).unwrap(),
-                    policy_evaluated_disposition: row.get(2).unwrap(),
-                    policy_evaluated_dkim: row.get(3).unwrap(),
-                    policy_evaluated_spf: row.get(4).unwrap(),
-                    identifiers_header_from: row.get(5).unwrap(),
-                    auth_results_dkim_domain: row.get(6).unwrap(),
-                    auth_results_dkim_result: row.get(7).unwrap(),
-                    auth_results_dkim_selector: row.get(8).unwrap(),
-                    auth_results_spf_domain: row.get(9).unwrap(),
-                    auth_results_spf_result: row.get(10).unwrap(),
-                })
+        let record_iter = stmt.query_map(params![report_id], |row| {
+            Ok(report::Record {
+                source_ip: row.get(0)?,
+                count: row.get(1)?,
+                policy_evaluated_disposition: row.get(2)?,
+                policy_evaluated_dkim: row.get(3)?,
+                policy_evaluated_spf: row.get(4)?,
+                identifiers_header_from: row.get(5)?,
+                auth_results_dkim_domain: row.get(6)?,
+                auth_results_dkim_result: row.get(7)?,
+                auth_results_dkim_selector: row.get(8)?,
+                auth_results_spf_domain: row.get(9)?,
+                auth_results_spf_result: row.get(10)?,
             })
-            .unwrap();
+        })?;
 
         for record in record_iter {
-            records.push(record.unwrap());
+            records.push(record?);
         }
 
         conn.query_row(
@@ -442,23 +431,22 @@ impl DB {
             params![report_id],
             |row| {
                 Ok(report::Report {
-                    blob: row.get(0).unwrap(),
-                    org_name: row.get(1).unwrap(),
-                    email: row.get(2).unwrap(),
-                    extra_contact_info: row.get(3).unwrap(),
+                    blob: row.get(0)?,
+                    org_name: row.get(1)?,
+                    email: row.get(2)?,
+                    extra_contact_info: row.get(3)?,
                     report_id: report_id.clone(),
-                    date_begin: row.get(4).unwrap(),
-                    date_end: row.get(5).unwrap(),
-                    policy_domain: row.get(6).unwrap(),
-                    policy_adkim: row.get(7).unwrap(),
-                    policy_aspf: row.get(8).unwrap(),
-                    policy_p: row.get(9).unwrap(),
-                    policy_sp: row.get(10).unwrap(),
-                    policy_pct: row.get(11).unwrap(),
+                    date_begin: row.get(4)?,
+                    date_end: row.get(5)?,
+                    policy_domain: row.get(6)?,
+                    policy_adkim: row.get(7)?,
+                    policy_aspf: row.get(8)?,
+                    policy_p: row.get(9)?,
+                    policy_sp: row.get(10)?,
+                    policy_pct: row.get(11)?,
                     records,
                 })
             },
         )
-        .unwrap()
     }
 }
