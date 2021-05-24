@@ -49,6 +49,7 @@ struct TemplateAllReportsContext {
 fn not_found(req: &Request) -> Template {
     let mut map = std::collections::HashMap::new();
     map.insert("path", req.uri().path());
+    map.insert("title", "404 - not found");
     Template::render("error/404", &map)
 }
 
