@@ -1,16 +1,26 @@
 {% extends "base" %}
-
 {% block content %}
-
-
-{% if error %}
-<section class="error">
-Errors:
-<pre>{{ error }}</pre>
+<section id="fetcherrors" style="display: none;" class="error">
 </section>
-{% else %}
-<h2>Reports fetched!</h2>
-{% endif %}
-<h3>Log</h3>
-<pre class="log">{{ log }}</pre>
+<div id="fetchlogs">
+<h4>Fetching DMARC reports...</h4>
+<div class="loader"></div>
+</div>
+
+<script>
+let logs = document.getElementById("fetchlogs");
+let err = document.getElementById("fetcherrors");
+
+let url = `${window.location.origin}/fetchdata`;
+
+fetch(url)
+  .then(response => response.json())
+  .then(data => {
+          logs.innerHTML = `<h3>Logs</h3><pre class="log">${data.log}</pre>`;
+          if (data.error) {
+            err.innerHTML = `<pre>${data.err}</pre>`;
+            err.style = "block";
+          }
+          });
+</script>
 {% endblock content %}

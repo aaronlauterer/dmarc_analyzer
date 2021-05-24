@@ -7,6 +7,7 @@ extern crate serde_derive;
 extern crate rocket_contrib;
 
 use rocket::{Request, State};
+use rocket_contrib::json::Json;
 use rocket_contrib::serve::StaticFiles;
 use rocket_contrib::templates::Template;
 use std::collections::HashMap;
@@ -19,10 +20,14 @@ mod report;
 type DbConn = db::DB;
 
 #[derive(Serialize)]
-struct TemplateFetchContext {
-    title: String,
+struct FetchTask {
     log: String,
     error: String,
+}
+
+#[derive(Serialize)]
+struct TemplateFetchContext {
+    title: String,
 }
 
 #[derive(Serialize)]
@@ -66,7 +71,17 @@ fn index(db_conn: State<DbConn>) -> Template {
 }
 
 #[get("/fetch")]
-fn fetch(db_conn: State<DbConn>, config: State<config::Config>) -> Template {
+fn fetch() -> Template {
+    Template::render(
+        "fetched",
+        &TemplateFetchContext {
+            title: String::from("Fetch"),
+        },
+    )
+}
+
+#[get("/fetchdata")]
+fn fetchdata(db_conn: State<DbConn>, config: State<config::Config>) -> Json<FetchTask> {
     let imap_extract = imap_extract::ImapExtract::new(&config);
     let mut error = String::new();
     let mut logbuf = Vec::new();
@@ -75,14 +90,10 @@ fn fetch(db_conn: State<DbConn>, config: State<config::Config>) -> Template {
         Ok(_o) => {}
         Err(e) => error = format!("{:#}", e),
     };
-    Template::render(
-        "fetched",
-        &TemplateFetchContext {
-            title: String::from("Fetch"),
-            log: String::from_utf8(logbuf).expect("get fetch log"),
-            error,
-        },
-    )
+    Json(FetchTask {
+        log: String::from_utf8(logbuf).expect("get fetch log"),
+        error,
+    })
 }
 
 #[get("/all_reports/<domain>")]
@@ -106,7 +117,7 @@ fn rocket() -> rocket::Rocket {
             "/",
             StaticFiles::from(concat!(env!("CARGO_MANIFEST_DIR"), "/static")),
         )
-        .mount("/", routes![index, fetch, all_reports])
+        .mount("/", routes![index, fetch, fetchdata, all_reports])
         .register(catchers![not_found])
         .manage(conn)
         .manage(config)

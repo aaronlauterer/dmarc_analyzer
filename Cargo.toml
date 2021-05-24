@@ -26,4 +26,4 @@ serde-xml-rs = "0.4"
 [dependencies.rocket_contrib]
 version = "0.4.7"
 default-features = false
-features = ["serve", "tera_templates"]
+features = ["serve", "tera_templates", "json"]
