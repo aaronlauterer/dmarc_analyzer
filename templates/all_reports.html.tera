@@ -12,7 +12,6 @@
             <td>Count</td>
             <td>Source IP</td>
             <td>IP info</td>
-            <td>Details</td>
             <td>Full report</td>
         </tr>
     </thead>
@@ -39,7 +38,6 @@
             <td>{{ record.source_ip }}</td>
             <td><a href="https://whatismyipaddress.com/ip/{{ record.source_ip }}" target="_blank">IP Info</a></td>
         {% if loop.index < 2 -%}
-            <td rowspan="{{report.records | length }}"><a href="#">Details</a></td>
             <td rowspan="{{report.records | length }}"><a href="javascript:show_report({{ report.blob }})">Raw report</a></td>
         {% endif %}
         </tr>
