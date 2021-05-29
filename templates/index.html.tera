@@ -22,6 +22,11 @@
 <section class="basic_stats_plots">
 <h3>Last 30 days stats</h3>
 <div>
+{% for domain, data in policy_ev_stats_last_30 %}
+{{ plot::policy_ev_stats(domain=domain, data=data) }}
+{% endfor %}
+</div>
+<div>
 {% for domain, stats in basic_stats_last_30 %}
 {{ plot::basic_stats(domain=domain, stats=stats, type='30') }}
 {% endfor %}

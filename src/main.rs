@@ -6,6 +6,7 @@ extern crate rocket;
 extern crate serde_derive;
 extern crate rocket_contrib;
 
+use chrono::{Duration, Utc};
 use rocket::{Request, State};
 use rocket_contrib::json::Json;
 use rocket_contrib::serve::StaticFiles;
@@ -18,6 +19,8 @@ mod imap_extract;
 mod report;
 
 type DbConn = db::DB;
+type BasicStats = HashMap<String, db::BasicStats>;
+type PolicyEvStats = HashMap<String, HashMap<String, db::PolicyEvaluatedStats>>;
 
 #[derive(Serialize)]
 struct FetchTask {
@@ -33,9 +36,12 @@ struct TemplateFetchContext {
 #[derive(Serialize)]
 struct TemplateMainContext {
     title: String,
+    now: String,
+    now30_ago: String,
     domains: Vec<String>,
-    basic_stats: HashMap<String, db::BasicStats>,
-    basic_stats_last_30: HashMap<String, db::BasicStats>,
+    basic_stats: BasicStats,
+    basic_stats_last_30: BasicStats,
+    policy_ev_stats_last_30: PolicyEvStats,
 }
 
 #[derive(Serialize)]
@@ -59,14 +65,22 @@ fn index(db_conn: State<DbConn>) -> Template {
     let basic_stats = db::DB::get_basic_stats(&db_conn, 12000).expect("get basic stats");
     let basic_stats_last_30 =
         db::DB::get_basic_stats(&db_conn, 30).expect("get basic last 30 stats");
+    let policy_ev_stats_last_30 =
+        db::DB::get_policy_evaluated_stats(&db_conn, 30).expect("get basic last 30 stats");
+
+    let now = Utc::now();
+    let now30_ago = now - Duration::days(30);
 
     Template::render(
         "index",
         &TemplateMainContext {
             title: String::from("Start"),
+            now: now.format("%Y-%m-%d").to_string(),
+            now30_ago: now30_ago.format("%Y-%m-%d").to_string(),
             domains,
             basic_stats,
             basic_stats_last_30,
+            policy_ev_stats_last_30,
         },
     )
 }

@@ -74,3 +74,83 @@ let {{ name }}_layout = {
 Plotly.newPlot('basic_stats_{{ name }}', {{ name }}_data, {{ name }}_layout);
 </script>
 {% endmacro basic_stats %}
+
+
+{% macro policy_ev_stats(domain, data) %}
+{% set name = domain ~ '_policy_ev' | slugify | replace(from="-", to="_") %}
+<div id="{{ name }}">
+</div>
+<script>
+let {{ name }}_dates = [
+{% for k,v in data %}
+'{{ k }}',
+{% endfor %}
+];
+let {{ name }}_pass = {
+    x: {{ name }}_dates,
+    y: [
+{%- for k,v in data %}
+{{ v.pass }},
+{% endfor -%}
+    ],
+    mode: 'lines+markers',
+    name: 'Passed',
+    groupnorm: 'percent',
+    stackgroup: 'one',
+    line: {
+      'color': 'rgb(3, 183, 93)',
+    },
+};
+let {{ name }}_dkim_fail = {
+    x: {{ name }}_dates,
+    y: [
+{%- for k,v in data %}
+{{ v.dkim_fail }},
+{% endfor -%}
+    ],
+    mode: 'lines+markers',
+    name: 'DKIM failed',
+    stackgroup: 'one',
+    line: {
+      'color': 'rgb(232, 166, 2)',
+    },
+};
+let {{ name }}_spf_fail = {
+    x: {{ name }}_dates,
+    y: [
+{%- for k,v in data %}
+{{ v.spf_fail }},
+{% endfor -%}
+    ],
+    mode: 'lines+markers',
+    name: 'SPF failed',
+    stackgroup: 'one',
+    line: {
+      'color': 'rgb(214, 74, 74)',
+    },
+};
+let {{ name }}_data = [{{ name }}_spf_fail, {{ name }}_dkim_fail, {{ name }}_pass];
+let {{ name }}_layout = {
+  title: '{{ domain }}',
+  height: 220,
+  width: 350,
+  margin: {
+    l: 24,
+    r: 20,
+    b: 36,
+    t: 50,
+    pad: 2
+  },
+  xaxis: {range: ['{{ now30_ago }}', '{{ now }}']},
+  showlegend: true,
+  legend: {
+    orientation: 'h',
+    x: 0,
+    y: 1.13,
+  },
+  paper_bgcolor: 'rgba(0,0,0,0)',
+  plot_bgcolor: 'rgba(0,0,0,0)',
+};
+Plotly.newPlot('{{ name }}', {{ name }}_data, {{ name }}_layout);
+</script>
+{% endmacro line_plot_stats %}

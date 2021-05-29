@@ -19,6 +19,14 @@ pub struct BasicStats {
     spf_failed: u32,
 }
 
+#[derive(Debug, Serialize)]
+pub struct PolicyEvaluatedStats {
+    date: String,
+    pass: u32,
+    dkim_fail: u32,
+    spf_fail: u32,
+}
+
 impl DB {
     pub fn new(db_path: &Path) -> Result<Self> {
         let conn = Connection::open(db_path).expect("Error opening database");
@@ -434,5 +442,73 @@ impl DB {
                 })
             },
         )
+    }
+
+    pub fn get_policy_evaluated_stats(
+        &self,
+        last_days: u16,
+    ) -> Result<HashMap<String, HashMap<String, PolicyEvaluatedStats>>> {
+        let domains = Self::get_domains(&self)?;
+        let conn = &self.conn.lock().expect("Could not get DB lock");
+
+        let mut result = HashMap::new();
+
+        struct RowResult {
+            date: String,
+            dkim: String,
+            spf: String,
+            count: u32,
+        }
+
+        for domain in &domains {
+            let mut stmt = conn.prepare(
+                "SELECT
+                    report.policy_domain,
+                    date(report.date_begin, 'unixepoch'),
+                    record.policy_ev_dkim,
+                    record.policy_ev_spf,
+                    record.count
+                FROM report
+                LEFT OUTER JOIN record
+                ON record.report = report.report_id
+                WHERE
+                    date(report.date_begin, 'unixepoch') >= date('now', ?)
+                AND
+                    report.policy_domain = ?",
+            )?;
+            let rows = stmt.query_map(params![format!("-{} days", last_days), domain], |row| {
+                Ok(RowResult {
+                    date: row.get(1)?,
+                    dkim: row.get(2)?,
+                    spf: row.get(3)?,
+                    count: row.get(4)?,
+                })
+            })?;
+
+            let mut data = HashMap::new();
+
+            for row in rows {
+                let d = row?;
+                data.entry(d.date.clone()).or_insert(PolicyEvaluatedStats {
+                    date: d.date.clone(),
+                    pass: 0,
+                    dkim_fail: 0,
+                    spf_fail: 0,
+                });
+                if let Some(cur) = data.get_mut(&d.date) {
+                    if d.dkim == "pass" && d.spf == "pass" {
+                        cur.pass += 2 * d.count
+                    }
+                    if d.dkim == "fail" {
+                        cur.dkim_fail += d.count
+                    }
+                    if d.spf == "fail" {
+                        cur.spf_fail += d.count
+                    }
+                }
+            }
+            result.insert(domain.clone(), data);
+        }
+        Ok(result)
     }
 }
