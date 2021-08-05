@@ -1,0 +1,6 @@
+{% macro no_data(domain) %}
+<div class="nodata">
+ <p>No data found for {{ domain }}.</p>
+ <p class="shrug">¯\_(ツ)_/¯</p>
+</div>
+{% endmacro no_data %}

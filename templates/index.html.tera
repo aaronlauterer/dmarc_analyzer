@@ -1,8 +1,10 @@
 {% extends "base" %}
 {% import "macros/plot" as plot %}
+{% import "macros/utils" as utils %}
 
 {% block header %}
 <script src="/js/plotly-latest.min.js"></script>
+<script>let config = {responsive: true};</script>
 {% endblock header %}
 
 {% block content %}
@@ -23,12 +25,23 @@
 <h3>Last 30 days stats</h3>
 <div>
 {% for domain, data in policy_ev_stats_last_30 %}
+{% if data %}
 {{ plot::policy_ev_stats(domain=domain, data=data) }}
+{% else %}
+{{ utils::no_data(domain=domain) }}
+{% endif %}
 {% endfor %}
 </div>
 <div>
 {% for domain, stats in basic_stats_last_30 %}
+{% if stats.dkim_failed > 0
+    or stats.dkim_passed > 0
+    or stats.spf_failed > 0
+    or stats.spf_passed > 0 %}
 {{ plot::basic_stats(domain=domain, stats=stats, type='30') }}
+{% else %}
+{{ utils::no_data(domain=domain) }}
+{% endif %}
 {% endfor %}
 </div>
 </section>

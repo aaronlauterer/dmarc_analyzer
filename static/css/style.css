@@ -113,11 +113,22 @@ ul.domain-list {
     align-content: space-evenly;
 }
 
-.basic_stats_plots > div > div{
+.basic_stats_plots > div > div {
     border-radius: 5px;
     border: 1px solid #b0b0b0;
     margin: 1rem 0.2rem;
 }
+
+.nodata {
+    width: 350px;
+    text-align: center;
+}
+.nodata > .shrug {
+    color: rgba(0,0,0,0.05);
+    font-weight: bold;
+    font-size: 43px;
+}
+
 
 .modebar{
       display: none !important;
