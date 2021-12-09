@@ -41,7 +41,7 @@ impl Config {
                 .get("account", "server")
                 .expect("No server specified!")
         });
-        let port = args.port.clone().unwrap_or_else(|| {
+        let port = args.port.unwrap_or_else(|| {
             config_file
                 .getuint("account", "port")
                 .unwrap()

@@ -209,7 +209,7 @@ impl DB {
     }
 
     pub fn get_basic_stats(&self, last_days: u16) -> Result<HashMap<String, BasicStats>> {
-        let domains = Self::get_domains(&self)?;
+        let domains = Self::get_domains(self)?;
 
         #[derive(Debug)]
         struct ResRow {
@@ -334,11 +334,11 @@ impl DB {
     pub fn get_all_reports_for_domain(&self, domain: String) -> Result<Vec<report::Report>> {
         let mut reports: Vec<report::Report> = Vec::new();
 
-        let report_ids = Self::get_report_ids_for_domain(&self, domain)?;
+        let report_ids = Self::get_report_ids_for_domain(self, domain)?;
 
         for report in report_ids {
             let id = report;
-            reports.push(Self::get_report(&self, id)?);
+            reports.push(Self::get_report(self, id)?);
         }
 
         Ok(reports)
@@ -448,7 +448,7 @@ impl DB {
         &self,
         last_days: u16,
     ) -> Result<HashMap<String, HashMap<String, PolicyEvaluatedStats>>> {
-        let domains = Self::get_domains(&self)?;
+        let domains = Self::get_domains(self)?;
         let conn = &self.conn.lock().expect("Could not get DB lock");
 
         let mut result = HashMap::new();
