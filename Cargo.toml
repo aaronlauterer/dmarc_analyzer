@@ -2,7 +2,7 @@
 name = "dmarc_analyzer"
 version = "0.3.0"
 authors = ["Aaron Lauterer <aaron@lauterer.at>"]
-edition = "2018"
+edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
