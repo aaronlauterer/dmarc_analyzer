@@ -1,16 +1,13 @@
-#![feature(proc_macro_hygiene, decl_macro)]
-
 #[macro_use]
 extern crate rocket;
 #[macro_use]
 extern crate serde_derive;
-extern crate rocket_contrib;
 
 use chrono::{Duration, Utc};
 use rocket::{Request, State};
-use rocket_contrib::json::Json;
-use rocket_contrib::serve::StaticFiles;
-use rocket_contrib::templates::Template;
+use rocket::fs::FileServer;
+use rocket::serde::{Serialize, json::Json};
+use rocket_dyn_templates::Template;
 use std::collections::HashMap;
 
 mod config;
@@ -54,13 +51,12 @@ struct TemplateAllReportsContext {
 #[catch(404)]
 fn not_found(req: &Request) -> Template {
     let mut map = std::collections::HashMap::new();
-    map.insert("path", req.uri().path());
     map.insert("title", "404 - not found");
     Template::render("error/404", &map)
 }
 
 #[get("/")]
-fn index(db_conn: State<DbConn>) -> Template {
+fn index(db_conn: &State<DbConn>) -> Template {
     let domains = db::DB::get_domains(&db_conn).expect("get domains");
     let basic_stats = db::DB::get_basic_stats(&db_conn, 12000).expect("get basic stats");
     let basic_stats_last_30 =
@@ -96,7 +92,7 @@ fn fetch() -> Template {
 }
 
 #[get("/fetchdata")]
-fn fetchdata(db_conn: State<DbConn>, config: State<config::Config>) -> Json<FetchTask> {
+fn fetchdata(db_conn: &State<DbConn>, config: &State<config::Config>) -> Json<FetchTask> {
     let imap_extract = imap_extract::ImapExtract::new(&config);
     let mut error = String::new();
     let mut logbuf = Vec::new();
@@ -112,7 +108,7 @@ fn fetchdata(db_conn: State<DbConn>, config: State<config::Config>) -> Json<Fetc
 }
 
 #[get("/all_reports/<domain>")]
-fn all_reports(domain: String, db_conn: State<DbConn>) -> Template {
+fn all_reports(domain: String, db_conn: &State<DbConn>) -> Template {
     Template::render(
         "all_reports",
         &TemplateAllReportsContext {
@@ -124,21 +120,18 @@ fn all_reports(domain: String, db_conn: State<DbConn>) -> Template {
     )
 }
 
-fn rocket() -> rocket::Rocket {
+#[launch]
+fn rocket() -> _ {
     let config = config::Config::new();
     let conn = db::DB::new(&config.db_path).expect("get db conn");
-    rocket::ignite()
+    rocket::build()
         .mount(
             "/",
-            StaticFiles::from(concat!(env!("CARGO_MANIFEST_DIR"), "/static")),
+            FileServer::from("static"),
         )
         .mount("/", routes![index, fetch, fetchdata, all_reports])
-        .register(catchers![not_found])
+        .register("/", catchers![not_found])
         .manage(conn)
         .manage(config)
         .attach(Template::fairing())
-}
-
-fn main() {
-    rocket().launch();
 }
