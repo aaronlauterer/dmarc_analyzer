@@ -62,57 +62,68 @@ impl ImapExtract {
             .select("INBOX")
             .context("Failed to select INBOX")?;
         let message_count = inbox.exists;
-        let messages = imap_session.fetch("1:*", "RFC822")?;
-        let log_each_msg = message_count / 20;
 
-        let mut count = 0;
-        for message in messages.iter() {
-            count += 1;
-            if count % log_each_msg == 0 {
-                writeln!(
-                    logbuf,
-                    "{:.0} % done",
-                    100.00 / message_count as f32 * message.message as f32
-                )?;
+        if message_count > 0 {
+            let messages = imap_session.fetch("1:*", "RFC822")?;
+            let log_each_msg = message_count / 20;
+
+            let mut count = 0;
+            for message in messages.iter() {
+                count += 1;
+                if count % log_each_msg == 0 {
+                    writeln!(
+                        logbuf,
+                        "{:.0} % done",
+                        100.00 / message_count as f32 * message.message as f32
+                    )?;
+                }
+                if let Some(body) = message.body() {
+                    let mail = parse_mail(body)?;
+                    let message_id = mail.headers.get_first_value("Message-ID").unwrap();
+
+                    let attachment = match Self::get_attachment(&mail) {
+                        Ok(attachment) => attachment,
+                        Err(e) => {
+                            writeln!(logbuf, "{} Message: {}", e, message_id)?;
+                            continue;
+                        }
+                    };
+
+                    let attachment = Self::decompress_attachment(attachment)?;
+
+                    let parsed_report: serde_defs::Feedback = from_reader(std::io::Cursor::new(
+                        &attachment.decompressed.clone().unwrap(),
+                    ))
+                    .unwrap();
+                    let report = report::Report::from_with_blob(
+                        parsed_report,
+                        Some(attachment.decompressed.unwrap()),
+                    );
+
+                    match database.insert_report(&report) {
+                        Ok(_o) => {
+                            // copy to store_folder
+                            imap_session.copy(&count.to_string(), self.store_folder.to_string())?;
+                            
+                            // mark for deletion
+                            imap_session.store(&count.to_string(), "+FLAGS (\\Deleted)")?;
+                        }
+                        Err(e) => {
+                            writeln!(
+                                logbuf,
+                                "{} -- Report: '{}' - Organisation: '{}' ",
+                                e, report.report_id, report.org_name
+                            )?;
+                            continue;
+                        }
+                    };
+                }
             }
-            if let Some(body) = message.body() {
-                let mail = parse_mail(body)?;
-                let message_id = mail.headers.get_first_value("Message-ID").unwrap();
 
-                let attachment = match Self::get_attachment(&mail) {
-                    Ok(attachment) => attachment,
-                    Err(e) => {
-                        writeln!(logbuf, "{} Message: {}", e, message_id)?;
-                        continue;
-                    }
-                };
-
-                let attachment = Self::decompress_attachment(attachment)?;
-
-                let parsed_report: serde_defs::Feedback = from_reader(std::io::Cursor::new(
-                    &attachment.decompressed.clone().unwrap(),
-                ))
-                .unwrap();
-                let report = report::Report::from_with_blob(
-                    parsed_report,
-                    Some(attachment.decompressed.unwrap()),
-                );
-
-                match database.insert_report(&report) {
-                    Ok(_o) => {
-                        // TODO move to store_folder
-                    }
-                    Err(e) => {
-                        writeln!(
-                            logbuf,
-                            "{} -- Report: '{}' - Organisation: '{}' ",
-                            e, report.report_id, report.org_name
-                        )?;
-                        continue;
-                    }
-                };
-            }
+            // expunge messages marked deleted
+            imap_session.expunge()?;
         }
+
         writeln!(logbuf, "100 % done")?;
         imap_session.logout()?;
 
