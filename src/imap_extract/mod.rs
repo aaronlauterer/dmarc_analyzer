@@ -70,7 +70,7 @@ impl ImapExtract {
             let mut count = 0;
             for message in messages.iter() {
                 count += 1;
-                if count % log_each_msg == 0 {
+                if count > 0 || count % log_each_msg == 0 {
                     writeln!(
                         logbuf,
                         "{:.0} % done",
