@@ -76,7 +76,6 @@ impl ImapExtract {
 
         let mut count = 0;
         for message in messages.iter() {
-            count += 1;
             if count % log_each_msg == 0 {
                 writeln!(
                     logbuf,
@@ -84,6 +83,7 @@ impl ImapExtract {
                     100.00 / message_count as f32 * message.message as f32
                 )?;
             }
+            count += 1;
             if let Some(body) = message.body() {
                 let mail = parse_mail(body)?;
                 let message_id = mail.headers.get_first_value("Message-ID").unwrap();
@@ -122,6 +122,7 @@ impl ImapExtract {
                 };
             }
         }
+        writeln!(logbuf, "----------")?;
         writeln!(logbuf, "100 % done")?;
         imap_session.logout()?;
 
