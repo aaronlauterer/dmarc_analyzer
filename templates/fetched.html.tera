@@ -21,6 +21,10 @@ fetch(url)
             err.innerHTML = `<pre>${data.error}</pre>`;
             err.style = "block";
           }
-          });
+          })
+    .catch((error) => {
+        err.innerHTML = `<pre>Error: ${error}</pre>`;
+        err.style = "block";
+    });
 </script>
 {% endblock content %}
