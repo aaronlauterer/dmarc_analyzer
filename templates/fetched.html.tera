@@ -1,11 +1,11 @@
 {% extends "base" %}
 {% block content %}
-<section id="fetcherrors" style="display: none;" class="error">
 </section>
 <div id="fetchlogs">
 <h4>Fetching DMARC reports...</h4>
 <div class="loader"></div>
 </div>
+<section id="fetcherrors" style="display: none;" class="error">
 
 <script>
 let logs = document.getElementById("fetchlogs");
