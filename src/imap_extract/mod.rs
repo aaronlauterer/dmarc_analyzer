@@ -69,7 +69,10 @@ impl ImapExtract {
         }
 
         let messages = imap_session.fetch("1:*", "RFC822")?;
-        let log_each_msg = message_count / 20;
+        let mut log_each_msg = message_count / 20;
+        if log_each_msg == 0 {
+            log_each_msg = 20;
+        }
 
         let mut count = 0;
         for message in messages.iter() {
