@@ -62,6 +62,12 @@ impl ImapExtract {
             .select("INBOX")
             .context("Failed to select INBOX")?;
         let message_count = inbox.exists;
+
+        if message_count == 0 {
+            writeln!(logbuf, "No messages found. Finished")?;
+            return Ok(());
+        }
+
         let messages = imap_session.fetch("1:*", "RFC822")?;
         let log_each_msg = message_count / 20;
 
