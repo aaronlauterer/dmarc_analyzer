@@ -127,20 +127,24 @@ impl ImapExtract {
                 );
 
                 match database.insert_report(&report) {
-                    Ok(_o) => {
-                        // TODO move to store_folder
-                    }
+                    Ok(_o) => {},
                     Err(e) => {
                         writeln!(
                             logbuf,
                             "{} -- Report: '{}' - Organisation: '{}' ",
                             e, report.report_id, report.org_name
                         )?;
-                        continue;
+                        if e.to_string() != "UNIQUE constraint failed: report.report_id" {
+                            continue;
+                        }
                     }
                 };
+                // not every IMAP server supports MOVE
+                imap_session.copy(&count.to_string(), format!("INBOX/{}", self.store_folder))?;
+                imap_session.store(&count.to_string(), "+FLAGS (\\DELETED)")?;
             }
         }
+        imap_session.expunge()?;
         writeln!(logbuf, "----------")?;
         writeln!(logbuf, "100 % done")?;
         imap_session.logout()?;
