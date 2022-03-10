@@ -1,6 +1,7 @@
 {% extends "base" %}
 {% block content %}
 </section>
+<h2>Fetch Reports</h2>
 <div id="fetchlogs">
 <h4>Fetching DMARC reports...</h4>
 <div class="loader"></div>
