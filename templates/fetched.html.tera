@@ -23,6 +23,7 @@ fetch(url)
           }
           })
     .catch((error) => {
+        logs.innerHTML = "";
         err.innerHTML = `<pre>Error: ${error}</pre>`;
         err.style = "block";
     });
