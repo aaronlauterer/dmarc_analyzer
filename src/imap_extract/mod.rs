@@ -97,9 +97,15 @@ impl ImapExtract {
                 )?;
             }
             count += 1;
+
             if let Some(body) = message.body() {
                 let mail = parse_mail(body)?;
-                let message_id = mail.headers.get_first_value("Message-ID").unwrap();
+                let mut message_id = mail.headers.get_first_value("Message-ID").unwrap();
+                // having a message id starting with a letter (e.g. <f...) will
+                // not be printed in the writeln!. Not sure why but removing the
+                // angle brackets is a cheap workaround
+                message_id = message_id.replace("<", "");
+                message_id = message_id.replace(">", "");
 
                 let attachment = match Self::get_attachment(&mail) {
                     Ok(attachment) => attachment,
