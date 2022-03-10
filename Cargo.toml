@@ -1,6 +1,6 @@
 [package]
 name = "dmarc_analyzer"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Aaron Lauterer <aaron@lauterer.at>"]
 edition = "2021"
 
