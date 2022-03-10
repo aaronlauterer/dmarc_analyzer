@@ -18,7 +18,7 @@ zip = { version = "0.5", features = ["deflate"] }
 libflate = "1"
 mailparse = "0.13.0"
 native-tls = "0.2.4"
-imap = "2.3.0"
+imap = "2.4.1"
 anyhow = "1.0.38"
 serde-xml-rs = "0.4"
 chrono = "0.4.19"
