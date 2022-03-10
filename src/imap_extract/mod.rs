@@ -58,6 +58,19 @@ impl ImapExtract {
         .context("Error connecting to server")?;
         let mut imap_session = client.login(self.user, self.password).map_err(|e| e.0)?;
 
+        match imap_session.select(format!("INBOX/{}", self.store_folder)) {
+            Ok(_o) => {},
+            Err(_e) => {
+                writeln!(
+                    logbuf,
+                    "Creating store folder: {}",
+                    self.store_folder
+                    )?;
+                imap_session.create(format!("INBOX/{}", self.store_folder))
+                    .context("Failed to create store folder")?
+            }
+        };
+
         let inbox = imap_session
             .select("INBOX")
             .context("Failed to select INBOX")?;
