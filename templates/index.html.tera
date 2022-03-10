@@ -10,7 +10,7 @@
 {% block content %}
 {% if domains | length == 0 %}
 <h2>No reports found</h2>
-<section class="error">There are no reports available yet. Please start a <a href="/fetch" title="Fetch" >fetch run</a>.</section>
+<section class="info">There are no reports available yet. Please start a <a href="/fetch" title="Fetch" >fetch run</a>.</section>
 {% else %}
 <section>
 <h2>Reports list</h2>
