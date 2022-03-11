@@ -17,9 +17,11 @@ let url = `${window.location.origin}/fetchdata`;
 fetch(url)
   .then(response => response.json())
   .then(data => {
-          logs.innerHTML = `<h3>Logs</h3><pre class="log">${data.log}</pre>`;
+          let escaped_log = data.log.replaceAll('<', '&lt;');
+          logs.innerHTML = `<h3>Logs</h3><pre class="log">${escaped_log}</pre>`;
           if (data.error) {
-            err.innerHTML = `<pre>${data.error}</pre>`;
+            let escaped_err = data.err.replaceAll('<', '&lt;');
+            err.innerHTML = `<pre>${escaped_err}</pre>`;
             err.style = "block";
           }
           })
