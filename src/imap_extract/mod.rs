@@ -100,7 +100,7 @@ impl ImapExtract {
 
             if let Some(body) = message.body() {
                 let mail = parse_mail(body)?;
-                let mut message_id = mail.headers.get_first_value("Message-ID").unwrap();
+                let message_id = mail.headers.get_first_value("Message-ID").unwrap();
 
                 let attachment = match Self::get_attachment(&mail) {
                     Ok(attachment) => attachment,

@@ -49,7 +49,7 @@ struct TemplateAllReportsContext {
 }
 
 #[catch(404)]
-fn not_found(req: &Request) -> Template {
+fn not_found(_req: &Request) -> Template {
     let mut map = std::collections::HashMap::new();
     map.insert("title", "404 - not found");
     Template::render("error/404", &map)
@@ -57,12 +57,12 @@ fn not_found(req: &Request) -> Template {
 
 #[get("/")]
 fn index(db_conn: &State<DbConn>) -> Template {
-    let domains = db::DB::get_domains(&db_conn).expect("get domains");
-    let basic_stats = db::DB::get_basic_stats(&db_conn, 12000).expect("get basic stats");
+    let domains = db::DB::get_domains(db_conn).expect("get domains");
+    let basic_stats = db::DB::get_basic_stats(db_conn, 12000).expect("get basic stats");
     let basic_stats_last_30 =
-        db::DB::get_basic_stats(&db_conn, 30).expect("get basic last 30 stats");
+        db::DB::get_basic_stats(db_conn, 30).expect("get basic last 30 stats");
     let policy_ev_stats_last_30 =
-        db::DB::get_policy_evaluated_stats(&db_conn, 30).expect("get basic last 30 stats");
+        db::DB::get_policy_evaluated_stats(db_conn, 30).expect("get basic last 30 stats");
 
     let now = Utc::now();
     let now30_ago = now - Duration::days(30);
@@ -93,11 +93,11 @@ fn fetch() -> Template {
 
 #[get("/fetchdata")]
 fn fetchdata(db_conn: &State<DbConn>, config: &State<config::Config>) -> Json<FetchTask> {
-    let imap_extract = imap_extract::ImapExtract::new(&config);
+    let imap_extract = imap_extract::ImapExtract::new(config);
     let mut error = String::new();
     let mut logbuf = Vec::new();
 
-    match imap_extract.fetch_reports(&db_conn, &mut logbuf) {
+    match imap_extract.fetch_reports(db_conn, &mut logbuf) {
         Ok(_o) => {}
         Err(e) => error = format!("{:#}", e),
     };
@@ -114,7 +114,7 @@ fn all_reports(domain: String, db_conn: &State<DbConn>) -> Template {
         &TemplateAllReportsContext {
             title: format!("Report list: {}", domain),
             domain: domain.clone(),
-            reports: db::DB::get_all_reports_for_domain(&db_conn, domain)
+            reports: db::DB::get_all_reports_for_domain(db_conn, domain)
                 .expect("get all reports for domain"),
         },
     )
