@@ -3,10 +3,10 @@ use libflate::gzip::Decoder;
 use mailparse::*;
 use native_tls::TlsConnector;
 use serde_xml_rs::from_reader;
+use std::collections::HashMap;
 use std::io::prelude::*;
 use std::path::PathBuf;
 use zip::ZipArchive;
-use std::collections::HashMap;
 
 use crate::config::Config;
 use crate::db;
@@ -60,14 +60,11 @@ impl ImapExtract {
         let mut imap_session = client.login(self.user, self.password).map_err(|e| e.0)?;
 
         match imap_session.select(format!("INBOX/{}", self.store_folder)) {
-            Ok(_o) => {},
+            Ok(_o) => {}
             Err(_e) => {
-                writeln!(
-                    logbuf,
-                    "Creating store folder: {}",
-                    self.store_folder
-                    )?;
-                imap_session.create(format!("INBOX/{}", self.store_folder))
+                writeln!(logbuf, "Creating store folder: {}", self.store_folder)?;
+                imap_session
+                    .create(format!("INBOX/{}", self.store_folder))
                     .context("Failed to create store folder")?
             }
         };
@@ -125,9 +122,11 @@ impl ImapExtract {
 
                 match database.insert_report(&report) {
                     Ok(_o) => {
-                        let count = fetch_stats.entry(report.policy_domain.unwrap()).or_insert(0);
+                        let count = fetch_stats
+                            .entry(report.policy_domain.unwrap())
+                            .or_insert(0);
                         *count += 1;
-                    },
+                    }
                     Err(e) => {
                         writeln!(
                             logbuf,

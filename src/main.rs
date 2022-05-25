@@ -4,9 +4,9 @@ extern crate rocket;
 extern crate serde_derive;
 
 use chrono::{Duration, Utc};
-use rocket::{Request, State};
 use rocket::fs::FileServer;
-use rocket::serde::{Serialize, json::Json};
+use rocket::serde::{json::Json, Serialize};
+use rocket::{Request, State};
 use rocket_dyn_templates::Template;
 use std::collections::HashMap;
 
@@ -125,10 +125,7 @@ fn rocket() -> _ {
     let config = config::Config::new();
     let conn = db::DB::new(&config.db_path).expect("get db conn");
     rocket::build()
-        .mount(
-            "/",
-            FileServer::from("static"),
-        )
+        .mount("/", FileServer::from("static"))
         .mount("/", routes![index, fetch, fetchdata, all_reports])
         .register("/", catchers![not_found])
         .manage(conn)
