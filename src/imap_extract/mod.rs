@@ -6,6 +6,7 @@ use serde_xml_rs::from_reader;
 use std::io::prelude::*;
 use std::path::PathBuf;
 use zip::ZipArchive;
+use std::collections::HashMap;
 
 use crate::config::Config;
 use crate::db;
@@ -88,6 +89,7 @@ impl ImapExtract {
         }
 
         let mut count = 0;
+        let mut fetch_stats = HashMap::new();
         for message in messages.iter() {
             if count % log_each_msg == 0 {
                 writeln!(
@@ -122,7 +124,10 @@ impl ImapExtract {
                 );
 
                 match database.insert_report(&report) {
-                    Ok(_o) => {},
+                    Ok(_o) => {
+                        let count = fetch_stats.entry(report.policy_domain.unwrap()).or_insert(0);
+                        *count += 1;
+                    },
                     Err(e) => {
                         writeln!(
                             logbuf,
@@ -140,8 +145,14 @@ impl ImapExtract {
             }
         }
         imap_session.expunge()?;
-        writeln!(logbuf, "----------")?;
         writeln!(logbuf, "100 % done")?;
+        if !fetch_stats.is_empty() {
+            writeln!(logbuf, "----------")?;
+            writeln!(logbuf, "Imported:")?;
+            for (domain, val) in fetch_stats.iter() {
+                writeln!(logbuf, "{} -> {}", domain, val)?;
+            }
+        }
         imap_session.logout()?;
 
         Ok(())
